@@ -50,7 +50,9 @@ namespace ClientFileStorage
                 handler.CookieContainer = cookieContainer;
                 client = new HttpClient(handler);
                 client.BaseAddress = baseAddress;
+                //MessageBox.Show("   ");
                 HttpResponseMessage response = await client.GetAsync(addressTextBox.Text);
+                //MessageBox.Show(response.ToString());
                 response.EnsureSuccessStatusCode();
                 LINK = addressTextBox.Text;
                 Console.WriteLine(cookieContainer.GetCookieHeader(baseAddress));

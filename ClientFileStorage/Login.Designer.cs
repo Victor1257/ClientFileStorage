@@ -137,9 +137,9 @@
             // 
             this.addressTextBox.FormattingEnabled = true;
             this.addressTextBox.Items.AddRange(new object[] {
-            "http://localhost:53500/chat",
-            "http://10.38.40.39:53500/chat",
-            "http://10.38.46.55:8080/chat"});
+            "http://localhost:53500/",
+            "http://10.38.40.39:53500/",
+            "http://10.38.46.55:8080/"});
             this.addressTextBox.Location = new System.Drawing.Point(56, 6);
             this.addressTextBox.Name = "addressTextBox";
             this.addressTextBox.Size = new System.Drawing.Size(306, 21);

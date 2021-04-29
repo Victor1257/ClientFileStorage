@@ -18,7 +18,6 @@ namespace ClientFileStorage
     {
         public string Link;
         public string IdUser;
-       // public HubConnection _connection;
         public ListViewItem listView;
         public FileStorage fileStorage;
         public string price;
@@ -38,33 +37,26 @@ namespace ClientFileStorage
             client = httpClient;
         }
 
-        //public async void SetCon()
-        //{
-        //    try
-        //    {
-        //        _connection = new HubConnectionBuilder()
-        //            .WithUrl(Link)
-        //            .AddMessagePackProtocol()
-        //            .WithAutomaticReconnect()
-        //            .Build();
-        //        _connection.ServerTimeout = TimeSpan.FromMinutes(60);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine(ex.Message);
-        //    }
-        //    try
-        //    {
-        //        await _connection.StartAsync();
-        //        Console.WriteLine(_connection.State);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine(ex.Message);
+        private void TemplateMethod(int i)
+        {
+            sqlDataAdapter.Update(dataSet, "Task");
+            string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
+            s1 = s1.Remove(s1.Length - 3, 3);
+            string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
+            string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
+            s3 = s3.Remove(s3.Length - 3, 3);
+            s2 = s2.Replace(s3, s1);
+            dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
+            sqlDataAdapter.Update(dataSet, "Task");
+            string[] stringTask = new string[19];
+            for (int j = 0; j < 19; j++)
+            {
+                stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
+            }
+            WriteTaskToServer1(stringTask);
+        }
 
-        //        return;
-        //    }
-        //}
+
 
         public void MakeTask()
         {
@@ -173,21 +165,7 @@ namespace ClientFileStorage
                                         {
                                             if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                               WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
 
                                         }
@@ -196,21 +174,7 @@ namespace ClientFileStorage
                                             var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
                                             if (m == DateTime.Now.DayOfWeek)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
                                         }
                                     }
@@ -275,21 +239,7 @@ namespace ClientFileStorage
                                         {
                                             if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
 
                                         }
@@ -298,21 +248,7 @@ namespace ClientFileStorage
                                             var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
                                             if (m == DateTime.Now.DayOfWeek)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
                                         }
                                     }
@@ -377,21 +313,7 @@ namespace ClientFileStorage
                                         {
                                             if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
 
                                         }
@@ -400,21 +322,7 @@ namespace ClientFileStorage
                                             var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
                                             if (m == DateTime.Now.DayOfWeek)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
                                         }
                                     }
@@ -479,21 +387,7 @@ namespace ClientFileStorage
                                         {
                                             if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
 
                                         }
@@ -502,21 +396,7 @@ namespace ClientFileStorage
                                             var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
                                             if (m == DateTime.Now.DayOfWeek)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
                                         }
                                     }
@@ -581,21 +461,7 @@ namespace ClientFileStorage
                                         {
                                             if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
 
                                         }
@@ -604,21 +470,7 @@ namespace ClientFileStorage
                                             var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
                                             if (m == DateTime.Now.DayOfWeek)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
                                         }
                                     }
@@ -683,21 +535,7 @@ namespace ClientFileStorage
                                         {
                                             if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
 
                                         }
@@ -706,21 +544,7 @@ namespace ClientFileStorage
                                             var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
                                             if (m == DateTime.Now.DayOfWeek)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
                                         }
                                     }
@@ -785,21 +609,7 @@ namespace ClientFileStorage
                                         {
                                             if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
 
                                         }
@@ -808,21 +618,7 @@ namespace ClientFileStorage
                                             var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
                                             if (m == DateTime.Now.DayOfWeek)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
                                         }
                                     }
@@ -1018,21 +814,7 @@ namespace ClientFileStorage
                                         {
                                             if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
 
                                         }
@@ -1041,21 +823,7 @@ namespace ClientFileStorage
                                             var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
                                             if (m == DateTime.Now.DayOfWeek)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
                                         }
                                     }
@@ -1174,21 +942,7 @@ namespace ClientFileStorage
                                         {
                                             if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
 
                                         }
@@ -1197,21 +951,7 @@ namespace ClientFileStorage
                                             var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
                                             if (m == DateTime.Now.DayOfWeek)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
                                         }
                                     }
@@ -1330,21 +1070,7 @@ namespace ClientFileStorage
                                         {
                                             if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
 
                                         }
@@ -1353,21 +1079,7 @@ namespace ClientFileStorage
                                             var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
                                             if (m == DateTime.Now.DayOfWeek)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
                                         }
                                     }
@@ -1486,21 +1198,7 @@ namespace ClientFileStorage
                                         {
                                             if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
 
                                         }
@@ -1642,21 +1340,7 @@ namespace ClientFileStorage
                                         {
                                             if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
 
                                         }
@@ -1665,21 +1349,7 @@ namespace ClientFileStorage
                                             var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
                                             if (m == DateTime.Now.DayOfWeek)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
                                         }
                                     }
@@ -1798,21 +1468,7 @@ namespace ClientFileStorage
                                         {
                                             if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
 
                                         }
@@ -1821,21 +1477,7 @@ namespace ClientFileStorage
                                             var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
                                             if (m == DateTime.Now.DayOfWeek)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
                                         }
                                     }
@@ -1954,21 +1596,7 @@ namespace ClientFileStorage
                                         {
                                             if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
 
                                         }
@@ -1977,21 +1605,7 @@ namespace ClientFileStorage
                                             var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
                                             if (m == DateTime.Now.DayOfWeek)
                                             {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
+                                                TemplateMethod(i);
                                             }
                                         }
                                     }
@@ -2109,25 +1723,7 @@ namespace ClientFileStorage
                 MessageBox.Show(e.Message);
             }
         }
-        //public async void CreatecompressSYBDPostg(string Adres_Server, string Way, string Name_SYBD,int id1,string MustBeEx)
-        //{
-        //    try
-        //    {
-        //        Загрузитьфайл загрузитьфайл = new Загрузитьфайл(Link, IdUser,client);
-        //        string path = @"\\" + Adres_Server + Way.Remove(0, 2) + "\\" + Name_SYBD + ".bak";
-        //        string dirName = new DirectoryInfo(path).Name;
-        //        string time = DateTime.Now.ToString();
-        //        string archivePath = "./ToSend/";
-        //        string archivename = dirName.Remove(dirName.Length - 4, 4) + " " + time.Replace(":", "-");
-        //        string destinationpath = archivePath + archivename + ".gz";
-        //        Compress(path, destinationpath);
-        //        await System.Threading.Tasks.Task.Run(() => загрузитьфайл.загрузитьФайлToolStripMenuItem_Click1(destinationpath, false, id1, MustBeEx));
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        MessageBox.Show(e.Message);
-        //    }
-        //}
+
         public async void CreatecompressSYBDPostg(string Adres_Server, string Way, string Name_SYBD,int id1,string MustBeEx)
         {
             try
