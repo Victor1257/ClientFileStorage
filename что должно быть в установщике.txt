@@ -1,0 +1,12 @@
+Файлы:
+
+Database1.mdf
+Database1_log.ldf
+ClientFileStorage_TemporaryKey.pfx
+
+Папки:
+
+ToSend
+Uploads
+
+и это всё внутри ClientFileStorage папки
