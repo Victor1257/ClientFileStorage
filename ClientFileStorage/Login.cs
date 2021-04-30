@@ -91,17 +91,17 @@ namespace ClientFileStorage
             AcceptButton = sendButton;
         }
 
-        private async void sendButton_Click(object sender, EventArgs e)
+        private async void LoginMethod()
         {
             try
             {
-               Console.WriteLine(cookieContainer.GetCookieHeader(baseAddress));
-               HttpResponseMessage responseMessage =await client.GetAsync("api/login/send?Email=" + textBox1.Text+ "&Password=" + textBox2.Text);
+                Console.WriteLine(cookieContainer.GetCookieHeader(baseAddress));
+                HttpResponseMessage responseMessage = await client.GetAsync("api/login/send?Email=" + textBox1.Text + "&Password=" + textBox2.Text);
                 responseMessage.EnsureSuccessStatusCode();
                 var emp = await responseMessage.Content.ReadAsStringAsync();
                 JavaScriptSerializer json_serializer = new JavaScriptSerializer();
                 string[] Param = (string[])json_serializer.Deserialize(emp, typeof(string[]));
-                if (Param[0]=="true")
+                if (Param[0] == "true")
                 {
                     FileStorage newForm = new FileStorage(this.LINK, Param[2], this.client);
                     IDUSER = Param[2];
@@ -113,12 +113,17 @@ namespace ClientFileStorage
                 {
                     textBox3.Text = "Неверный логин или пароль";
                 }
-                
+
             }
             catch (HttpRequestException ex)
             {
                 Log(Color.Red, ex.ToString());
             }
+        }
+
+        private async void sendButton_Click(object sender, EventArgs e)
+        {
+            LoginMethod();
         }
 
         private void UpdateState(bool connected)
@@ -164,7 +169,8 @@ namespace ClientFileStorage
         {
             if (e.KeyCode == Keys.Enter)
             {
-                try
+                LoginMethod();
+                /*try
                 {
                     HttpResponseMessage responseMessage = await client.GetAsync("api/user?Email=" + textBox1.Text + "&Password=" + textBox2.Text);
                     responseMessage.EnsureSuccessStatusCode();
@@ -187,7 +193,7 @@ namespace ClientFileStorage
                 catch (Exception ex)
                 {
                     Log(Color.Red, ex.ToString());
-                }
+                }*/
             }
 
         }
