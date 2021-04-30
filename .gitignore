@@ -351,3 +351,6 @@ MigrationBackup/
 
 ClientFileStorage/ToSend/**
 ClientFileStorage/Uploads/**
+
+ClientFileStorage/ClientFileStorage/bin/Debug/ToSend/**
+ClientFileStorage/ClientFileStorage/bin/Debug/Uploads/**
