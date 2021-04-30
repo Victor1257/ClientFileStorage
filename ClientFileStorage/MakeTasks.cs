@@ -83,6 +83,49 @@ namespace ClientFileStorage
             }
         }
 
+        private void FileRegularJob(string a, int i)
+        {
+            if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Hour == Time.Hour && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Minute == Time.Minute)
+            {
+                string MustBeEx = dataSet.Tables["Task"].Rows[i][17].ToString();
+                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddMinutes(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][9]) * 60);
+                sqlDataAdapter.Update(dataSet, "Task");
+                string[] stringTask = new string[19];
+                for (int j = 0; j < 19; j++)
+                {
+                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
+                }
+                WriteTaskToServer1(stringTask);
+                CreatecompressFile(a, (int)dataSet.Tables["Task"].Rows[i]["Id"], MustBeEx);
+            }
+            if (Convert.ToBoolean(dataSet.Tables["Task"].Rows[i][13]) && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][12]).Date == DateTime.Now.Date)
+            {
+                int id2 = (int)dataSet.Tables["Task"].Rows[i]["Id"];
+                string sql1 = "DELETE FROM [SYBD] " + "WHERE IdSYBD = @IdSYBD";
+                SqlCommand command3 = new SqlCommand(sql1, sqlConnection);
+                command3.Parameters.AddWithValue("@IdSYBD", id2);
+                command3.ExecuteNonQuery();
+                dataSet.Tables["Task"].Rows[i].Delete();
+                sqlDataAdapter.Update(dataSet, "Task");
+            }
+            if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "ежедневная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
+            {
+                if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
+                {
+                    TemplateMethod(i);
+                }
+
+            }
+            if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "еженедельная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
+            {
+                var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
+                if (m == DateTime.Now.DayOfWeek)
+                {
+                    TemplateMethod(i);
+                }
+            }
+        }
+
         private void FolderOneTimeJob(int id1, int i)
         {
             if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Hour == Time.Hour && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Minute == Time.Minute)
@@ -131,6 +174,78 @@ namespace ClientFileStorage
                 dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i]["MustBeExecuted"]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60);
                 dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToString(dataSet.Tables["Task"].Rows[i]["MustBeExecuted"]).Replace(Convert.ToDateTime(dataSet.Tables["Task"].Rows[i]["MustBeExecuted"]).TimeOfDay.ToString(), (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i]["AOneTimeJobValue"]).TimeOfDay.ToString()));
                 sqlDataAdapter.Update(dataSet, "Task");
+            }
+        }
+
+        private void FolderRegularJob(int id1, int i)
+        {
+            if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Hour == Time.Hour && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Minute == Time.Minute)
+            {
+                string MustBeEx = dataSet.Tables["Task"].Rows[i][17].ToString();
+                con1 = ConSYBD(Integrated_Security, Adres_Server, Instance_Server, Name_SYBD, Login_SYBD, Password_SYBD, Time, Port_Server);
+                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddMinutes(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][9]) * 60);
+                sqlDataAdapter.Update(dataSet, "Task");
+                string[] stringTask = new string[19];
+                for (int j = 0; j < 19; j++)
+                {
+                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
+                }
+                WriteTaskToServer1(stringTask);
+                if (The_Supplier == "Microsoft")
+                {
+                    sqlConnection1 = new SqlConnection(@con1);
+                    sqlConnection1.Open();
+                    SqlCommand command2 = new SqlCommand("BACKUP DATABASE[" + Name_SYBD + "] TO  DISK = N'" + Way + "\\" + Name_SYBD + ".bak" + "' WITH NOFORMAT, INIT, NAME = N'" + Name_SYBD + "-Полная База данных Резервное копирование', SKIP, NOREWIND, NOUNLOAD, STATS = 10", sqlConnection1);
+                    command2.CommandTimeout = 10000;
+                    command2.ExecuteNonQuery();
+                    sqlConnection1.Close();
+                    CreatecompressSYBD(Adres_Server, Way, Name_SYBD, id1, MustBeEx);
+                }
+                if (The_Supplier == "PostgreSQL")
+                {
+                    NpgsqlConnection conn = new NpgsqlConnection(con1);
+                    conn.Open();
+                    NpgsqlCommand npgsqlCommand1 = new NpgsqlCommand("show data_directory", conn);
+                    string path = (string)npgsqlCommand1.ExecuteScalar();
+                    path = path.Remove(path.Length - 4, 4) + "backups";
+                    NpgsqlCommand npgsqlCommand = new NpgsqlCommand("select * from public.xp_pg_dump(@dbName, @backupName)", conn);
+                    npgsqlCommand.CommandTimeout = 86400;
+                    npgsqlCommand.Parameters.AddWithValue("@dbName", Name_SYBD);
+                    npgsqlCommand.Parameters.AddWithValue("@backupName", path + "/" + Name_SYBD + ".bak");
+                    npgsqlCommand.ExecuteNonQuery();
+                    conn.Close();
+                    CreatecompressSYBDPostg(Adres_Server, path, Name_SYBD, id1, MustBeEx);
+
+                }
+
+                if (Convert.ToBoolean(dataSet.Tables["Task"].Rows[i][13]) && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][12]).Date == DateTime.Now.Date)
+                {
+                    int id2 = (int)dataSet.Tables["Task"].Rows[i]["Id"];
+                    string sql1 = "DELETE FROM [SYBD] " + "WHERE IdSYBD = @IdSYBD";
+                    SqlCommand command3 = new SqlCommand(sql1, sqlConnection);
+                    command3.Parameters.AddWithValue("@IdSYBD", id2);
+                    command3.ExecuteNonQuery();
+                    dataSet.Tables["Task"].Rows[i].Delete();
+                    sqlDataAdapter.Update(dataSet, "Task");
+
+                }
+            }
+
+            if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "ежедневная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
+            {
+                if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
+                {
+                    TemplateMethod(i);
+                }
+
+            }
+            if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "еженедельная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
+            {
+                var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
+                if (m == DateTime.Now.DayOfWeek)
+                {
+                    TemplateMethod(i);
+                }
             }
         }
 
@@ -190,70 +305,11 @@ namespace ClientFileStorage
                                     bool AOneTimeJob = Convert.ToBoolean(dataSet.Tables["Task"].Rows[i][7]);
                                     if (AOneTimeJob)
                                     {
-                                        if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Hour == Time.Hour && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Minute == Time.Minute)
-                                        {
-                                            string MustBeEx = dataSet.Tables["Task"].Rows[i][17].ToString();
-                                            CreatecompressFile(a, (int)dataSet.Tables["Task"].Rows[i]["Id"], MustBeEx);
-                                        }
-                                        if (Convert.ToBoolean(dataSet.Tables["Task"].Rows[i][13]) && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][12]).Date == DateTime.Now.Date)
-                                        {
-                                            int id2 = (int)dataSet.Tables["Task"].Rows[i]["Id"];
-                                            string sql1 = "DELETE FROM [File] " + "WHERE IdFile = @IdFile";
-                                            SqlCommand command3 = new SqlCommand(sql1, sqlConnection);
-                                            command3.Parameters.AddWithValue("@IdFile", id2);
-                                            command3.ExecuteNonQuery();
-                                            dataSet.Tables["Task"].Rows[i].Delete();
-                                            sqlDataAdapter.Update(dataSet, "Task");
-
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "ежедневная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][8]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][8]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i]["MustBeExecuted"]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60);
-                                            dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToString(dataSet.Tables["Task"].Rows[i]["MustBeExecuted"]).Replace(Convert.ToDateTime(dataSet.Tables["Task"].Rows[i]["MustBeExecuted"]).TimeOfDay.ToString(), (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i]["AOneTimeJobValue"]).TimeOfDay.ToString()));
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                        }
+                                        FileOneTimeJob(a, i);
                                     }
                                     if (!AOneTimeJob)
                                     {
-                                        if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Hour == Time.Hour && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Minute == Time.Minute)
-                                        {
-                                            string MustBeEx = dataSet.Tables["Task"].Rows[i][17].ToString();
-                                            dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddMinutes(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][9]) * 60);
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                            string[] stringTask = new string[19];
-                                            for (int j = 0; j < 19; j++)
-                                            {
-                                                stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                            }
-                                            WriteTaskToServer1(stringTask);
-                                            CreatecompressFile(a, (int)dataSet.Tables["Task"].Rows[i]["Id"], MustBeEx);
-                                        }
-                                        if (Convert.ToBoolean(dataSet.Tables["Task"].Rows[i][13]) && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][12]).Date == DateTime.Now.Date)
-                                        {
-                                            int id2 = (int)dataSet.Tables["Task"].Rows[i]["Id"];
-                                            string sql1 = "DELETE FROM [SYBD] " + "WHERE IdSYBD = @IdSYBD";
-                                            SqlCommand command3 = new SqlCommand(sql1, sqlConnection);
-                                            command3.Parameters.AddWithValue("@IdSYBD", id2);
-                                            command3.ExecuteNonQuery();
-                                            dataSet.Tables["Task"].Rows[i].Delete();
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "ежедневная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "еженедельная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
-                                            if (m == DateTime.Now.DayOfWeek)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-                                        }
+                                        FileRegularJob(a, i);
                                     }
                                 }
                             }
@@ -268,45 +324,7 @@ namespace ClientFileStorage
                                     }
                                     if (!AOneTimeJob)
                                     {
-                                        if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Hour == Time.Hour && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Minute == Time.Minute)
-                                        {
-                                            string MustBeEx = dataSet.Tables["Task"].Rows[i][17].ToString();
-                                            dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddMinutes(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][9]) * 60);
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                            string[] stringTask = new string[19];
-                                            for (int j = 0; j < 19; j++)
-                                            {
-                                                stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                            }
-                                            WriteTaskToServer1(stringTask);
-                                            CreatecompressFile(a, (int)dataSet.Tables["Task"].Rows[i]["Id"], MustBeEx);
-                                        }
-                                        if (Convert.ToBoolean(dataSet.Tables["Task"].Rows[i][13]) && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][12]).Date == DateTime.Now.Date)
-                                        {
-                                            int id2 = (int)dataSet.Tables["Task"].Rows[i]["Id"];
-                                            string sql1 = "DELETE FROM [SYBD] " + "WHERE IdSYBD = @IdSYBD";
-                                            SqlCommand command3 = new SqlCommand(sql1, sqlConnection);
-                                            command3.Parameters.AddWithValue("@IdSYBD", id2);
-                                            command3.ExecuteNonQuery();
-                                            dataSet.Tables["Task"].Rows[i].Delete();
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "ежедневная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "еженедельная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
-                                            if (m == DateTime.Now.DayOfWeek)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-                                        }
+                                        FileRegularJob(a, i);
                                     }
                                 }
                             }
@@ -321,45 +339,7 @@ namespace ClientFileStorage
                                     }
                                     if (!AOneTimeJob)
                                     {
-                                        if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Hour == Time.Hour && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Minute == Time.Minute)
-                                        {
-                                            string MustBeEx = dataSet.Tables["Task"].Rows[i][17].ToString();
-                                            dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddMinutes(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][9]) * 60);
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                            string[] stringTask = new string[19];
-                                            for (int j = 0; j < 19; j++)
-                                            {
-                                                stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                            }
-                                            WriteTaskToServer1(stringTask);
-                                            CreatecompressFile(a, (int)dataSet.Tables["Task"].Rows[i]["Id"], MustBeEx);
-                                        }
-                                        if (Convert.ToBoolean(dataSet.Tables["Task"].Rows[i][13]) && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][12]).Date == DateTime.Now.Date)
-                                        {
-                                            int id2 = (int)dataSet.Tables["Task"].Rows[i]["Id"];
-                                            string sql1 = "DELETE FROM [SYBD] " + "WHERE IdSYBD = @IdSYBD";
-                                            SqlCommand command3 = new SqlCommand(sql1, sqlConnection);
-                                            command3.Parameters.AddWithValue("@IdSYBD", id2);
-                                            command3.ExecuteNonQuery();
-                                            dataSet.Tables["Task"].Rows[i].Delete();
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "ежедневная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "еженедельная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
-                                            if (m == DateTime.Now.DayOfWeek)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-                                        }
+                                        FileRegularJob(a, i);
                                     }
                                 }
                             }
@@ -374,45 +354,7 @@ namespace ClientFileStorage
                                     }
                                     if (!AOneTimeJob)
                                     {
-                                        if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Hour == Time.Hour && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Minute == Time.Minute)
-                                        {
-                                            string MustBeEx = dataSet.Tables["Task"].Rows[i][17].ToString();
-                                            dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddMinutes(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][9]) * 60);
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                            string[] stringTask = new string[19];
-                                            for (int j = 0; j < 19; j++)
-                                            {
-                                                stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                            }
-                                            WriteTaskToServer1(stringTask);
-                                            CreatecompressFile(a, (int)dataSet.Tables["Task"].Rows[i]["Id"], MustBeEx);
-                                        }
-                                        if (Convert.ToBoolean(dataSet.Tables["Task"].Rows[i][13]) && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][12]).Date == DateTime.Now.Date)
-                                        {
-                                            int id2 = (int)dataSet.Tables["Task"].Rows[i]["Id"];
-                                            string sql1 = "DELETE FROM [SYBD] " + "WHERE IdSYBD = @IdSYBD";
-                                            SqlCommand command3 = new SqlCommand(sql1, sqlConnection);
-                                            command3.Parameters.AddWithValue("@IdSYBD", id2);
-                                            command3.ExecuteNonQuery();
-                                            dataSet.Tables["Task"].Rows[i].Delete();
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "ежедневная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "еженедельная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
-                                            if (m == DateTime.Now.DayOfWeek)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-                                        }
+                                        FileRegularJob(a, i);
                                     }
                                 }
                             }
@@ -427,45 +369,7 @@ namespace ClientFileStorage
                                     }
                                     if (!AOneTimeJob)
                                     {
-                                        if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Hour == Time.Hour && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Minute == Time.Minute)
-                                        {
-                                            string MustBeEx = dataSet.Tables["Task"].Rows[i][17].ToString();
-                                            dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddMinutes(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][9]) * 60);
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                            string[] stringTask = new string[19];
-                                            for (int j = 0; j < 19; j++)
-                                            {
-                                                stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                            }
-                                            WriteTaskToServer1(stringTask);
-                                            CreatecompressFile(a, (int)dataSet.Tables["Task"].Rows[i]["Id"], MustBeEx);
-                                        }
-                                        if (Convert.ToBoolean(dataSet.Tables["Task"].Rows[i][13]) && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][12]).Date == DateTime.Now.Date)
-                                        {
-                                            int id2 = (int)dataSet.Tables["Task"].Rows[i]["Id"];
-                                            string sql1 = "DELETE FROM [SYBD] " + "WHERE IdSYBD = @IdSYBD";
-                                            SqlCommand command3 = new SqlCommand(sql1, sqlConnection);
-                                            command3.Parameters.AddWithValue("@IdSYBD", id2);
-                                            command3.ExecuteNonQuery();
-                                            dataSet.Tables["Task"].Rows[i].Delete();
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "ежедневная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "еженедельная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
-                                            if (m == DateTime.Now.DayOfWeek)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-                                        }
+                                        FileRegularJob(a, i);
                                     }
                                 }
                             }
@@ -480,45 +384,7 @@ namespace ClientFileStorage
                                     }
                                     if (!AOneTimeJob)
                                     {
-                                        if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Hour == Time.Hour && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Minute == Time.Minute)
-                                        {
-                                            string MustBeEx = dataSet.Tables["Task"].Rows[i][17].ToString();
-                                            dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddMinutes(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][9]) * 60);
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                            string[] stringTask = new string[19];
-                                            for (int j = 0; j < 19; j++)
-                                            {
-                                                stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                            }
-                                            WriteTaskToServer1(stringTask);
-                                            CreatecompressFile(a, (int)dataSet.Tables["Task"].Rows[i]["Id"], MustBeEx);
-                                        }
-                                        if (Convert.ToBoolean(dataSet.Tables["Task"].Rows[i][13]) && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][12]).Date == DateTime.Now.Date)
-                                        {
-                                            int id2 = (int)dataSet.Tables["Task"].Rows[i]["Id"];
-                                            string sql1 = "DELETE FROM [SYBD] " + "WHERE IdSYBD = @IdSYBD";
-                                            SqlCommand command3 = new SqlCommand(sql1, sqlConnection);
-                                            command3.Parameters.AddWithValue("@IdSYBD", id2);
-                                            command3.ExecuteNonQuery();
-                                            dataSet.Tables["Task"].Rows[i].Delete();
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "ежедневная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "еженедельная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
-                                            if (m == DateTime.Now.DayOfWeek)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-                                        }
+                                        FileRegularJob(a, i);
                                     }
                                 }
                             }
@@ -533,45 +399,7 @@ namespace ClientFileStorage
                                     }
                                     if (!AOneTimeJob)
                                     {
-                                        if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Hour == Time.Hour && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Minute == Time.Minute)
-                                        {
-                                            string MustBeEx = dataSet.Tables["Task"].Rows[i][17].ToString();
-                                            dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddMinutes(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][9]) * 60);
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                            string[] stringTask = new string[19];
-                                            for (int j = 0; j < 19; j++)
-                                            {
-                                                stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                            }
-                                            WriteTaskToServer1(stringTask);
-                                            CreatecompressFile(a, (int)dataSet.Tables["Task"].Rows[i]["Id"],MustBeEx);
-                                        }
-                                        if (Convert.ToBoolean(dataSet.Tables["Task"].Rows[i][13]) && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][12]).Date == DateTime.Now.Date)
-                                        {
-                                            int id2 = (int)dataSet.Tables["Task"].Rows[i]["Id"];
-                                            string sql1 = "DELETE FROM [SYBD] " + "WHERE IdSYBD = @IdSYBD";
-                                            SqlCommand command3 = new SqlCommand(sql1, sqlConnection);
-                                            command3.Parameters.AddWithValue("@IdSYBD", id2);
-                                            command3.ExecuteNonQuery();
-                                            dataSet.Tables["Task"].Rows[i].Delete();
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "ежедневная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "еженедельная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
-                                            if (m == DateTime.Now.DayOfWeek)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-                                        }
+                                        FileRegularJob(a, i);
                                     }
                                 }
                             }
@@ -663,74 +491,7 @@ namespace ClientFileStorage
                                     }
                                     if (!AOneTimeJob)
                                     {
-                                        if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Hour == Time.Hour && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Minute == Time.Minute)
-                                        {
-                                            string MustBeEx = dataSet.Tables["Task"].Rows[i][17].ToString();
-                                            con1 = ConSYBD(Integrated_Security, Adres_Server, Instance_Server, Name_SYBD, Login_SYBD, Password_SYBD, Time, Port_Server);
-                                            dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddMinutes(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][9]) * 60);
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                            string[] stringTask = new string[19];
-                                            for (int j = 0; j < 19; j++)
-                                            {
-                                                stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                            }
-                                            WriteTaskToServer1(stringTask);
-                                            if (The_Supplier == "Microsoft")
-                                            {
-                                                sqlConnection1 = new SqlConnection(@con1);
-                                                sqlConnection1.Open();
-                                                SqlCommand command2 = new SqlCommand("BACKUP DATABASE[" + Name_SYBD + "] TO  DISK = N'" + Way + "\\" + Name_SYBD + ".bak" + "' WITH NOFORMAT, INIT, NAME = N'" + Name_SYBD + "-Полная База данных Резервное копирование', SKIP, NOREWIND, NOUNLOAD, STATS = 10", sqlConnection1);
-                                                command2.CommandTimeout = 10000;
-                                                command2.ExecuteNonQuery();
-                                                sqlConnection1.Close();
-                                                CreatecompressSYBD(Adres_Server, Way, Name_SYBD,id1,MustBeEx);
-                                            }
-                                            if (The_Supplier == "PostgreSQL")
-                                            {
-                                                NpgsqlConnection conn = new NpgsqlConnection(con1);
-                                                conn.Open();
-                                                NpgsqlCommand npgsqlCommand1 = new NpgsqlCommand("show data_directory", conn);
-                                                string path = (string)npgsqlCommand1.ExecuteScalar();
-                                                path = path.Remove(path.Length - 4, 4) + "backups";
-                                                NpgsqlCommand npgsqlCommand = new NpgsqlCommand("select * from public.xp_pg_dump(@dbName, @backupName)", conn);
-                                                npgsqlCommand.CommandTimeout = 86400;
-                                                npgsqlCommand.Parameters.AddWithValue("@dbName", Name_SYBD);
-                                                npgsqlCommand.Parameters.AddWithValue("@backupName", path + "/" + Name_SYBD + ".bak");
-                                                npgsqlCommand.ExecuteNonQuery();
-                                                conn.Close();
-                                                CreatecompressSYBDPostg(Adres_Server, path, Name_SYBD,id1,MustBeEx);
-
-                                            }
-
-                                            if (Convert.ToBoolean(dataSet.Tables["Task"].Rows[i][13]) && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][12]).Date == DateTime.Now.Date)
-                                            {
-                                                int id2 = (int)dataSet.Tables["Task"].Rows[i]["Id"];
-                                                string sql1 = "DELETE FROM [SYBD] " + "WHERE IdSYBD = @IdSYBD";
-                                                SqlCommand command3 = new SqlCommand(sql1, sqlConnection);
-                                                command3.Parameters.AddWithValue("@IdSYBD", id2);
-                                                command3.ExecuteNonQuery();
-                                                dataSet.Tables["Task"].Rows[i].Delete();
-                                                sqlDataAdapter.Update(dataSet, "Task");
-
-                                            }
-                                        }
-
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "ежедневная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "еженедельная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
-                                            if (m == DateTime.Now.DayOfWeek)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-                                        }
+                                        FolderRegularJob(id1, i);
                                     }
                                 }
                             }
@@ -745,74 +506,7 @@ namespace ClientFileStorage
                                     }
                                     if (!AOneTimeJob)
                                     {
-                                        if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Hour == Time.Hour && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Minute == Time.Minute)
-                                        {
-                                            string MustBeEx = dataSet.Tables["Task"].Rows[i][17].ToString();
-                                            con1 = ConSYBD(Integrated_Security, Adres_Server, Instance_Server, Name_SYBD, Login_SYBD, Password_SYBD, Time, Port_Server);
-                                            dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddMinutes(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][9]) * 60);
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                            string[] stringTask = new string[19];
-                                            for (int j = 0; j < 19; j++)
-                                            {
-                                                stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                            }
-                                            WriteTaskToServer1(stringTask);
-                                            if (The_Supplier == "Microsoft")
-                                            {
-                                                sqlConnection1 = new SqlConnection(@con1);
-                                                sqlConnection1.Open();
-                                                SqlCommand command2 = new SqlCommand("BACKUP DATABASE[" + Name_SYBD + "] TO  DISK = N'" + Way + "\\" + Name_SYBD + ".bak" + "' WITH NOFORMAT, INIT, NAME = N'" + Name_SYBD + "-Полная База данных Резервное копирование', SKIP, NOREWIND, NOUNLOAD, STATS = 10", sqlConnection1);
-                                                command2.CommandTimeout = 10000;
-                                                command2.ExecuteNonQuery();
-                                                sqlConnection1.Close();
-                                                CreatecompressSYBD(Adres_Server, Way, Name_SYBD, id1, MustBeEx);
-                                            }
-                                            if (The_Supplier == "PostgreSQL")
-                                            {
-                                                NpgsqlConnection conn = new NpgsqlConnection(con1);
-                                                conn.Open();
-                                                NpgsqlCommand npgsqlCommand1 = new NpgsqlCommand("show data_directory", conn);
-                                                string path = (string)npgsqlCommand1.ExecuteScalar();
-                                                path = path.Remove(path.Length - 4, 4) + "backups";
-                                                NpgsqlCommand npgsqlCommand = new NpgsqlCommand("select * from public.xp_pg_dump(@dbName, @backupName)", conn);
-                                                npgsqlCommand.CommandTimeout = 86400;
-                                                npgsqlCommand.Parameters.AddWithValue("@dbName", Name_SYBD);
-                                                npgsqlCommand.Parameters.AddWithValue("@backupName", path + "/" + Name_SYBD + ".bak");
-                                                npgsqlCommand.ExecuteNonQuery();
-                                                conn.Close();
-                                                CreatecompressSYBDPostg(Adres_Server, path, Name_SYBD, id1, MustBeEx);
-
-                                            }
-
-                                            if (Convert.ToBoolean(dataSet.Tables["Task"].Rows[i][13]) && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][12]).Date == DateTime.Now.Date)
-                                            {
-                                                int id2 = (int)dataSet.Tables["Task"].Rows[i]["Id"];
-                                                string sql1 = "DELETE FROM [SYBD] " + "WHERE IdSYBD = @IdSYBD";
-                                                SqlCommand command3 = new SqlCommand(sql1, sqlConnection);
-                                                command3.Parameters.AddWithValue("@IdSYBD", id2);
-                                                command3.ExecuteNonQuery();
-                                                dataSet.Tables["Task"].Rows[i].Delete();
-                                                sqlDataAdapter.Update(dataSet, "Task");
-
-                                            }
-                                        }
-
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "ежедневная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "еженедельная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
-                                            if (m == DateTime.Now.DayOfWeek)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-                                        }
+                                        FolderRegularJob(id1, i);
                                     }
                                 }
                             }
@@ -827,74 +521,7 @@ namespace ClientFileStorage
                                     }
                                     if (!AOneTimeJob)
                                     {
-                                        if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Hour == Time.Hour && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Minute == Time.Minute)
-                                        {
-                                            string MustBeEx = dataSet.Tables["Task"].Rows[i][17].ToString();
-                                            con1 = ConSYBD(Integrated_Security, Adres_Server, Instance_Server, Name_SYBD, Login_SYBD, Password_SYBD, Time, Port_Server);
-                                            dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddMinutes(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][9]) * 60);
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                            string[] stringTask = new string[19];
-                                            for (int j = 0; j < 19; j++)
-                                            {
-                                                stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                            }
-                                            WriteTaskToServer1(stringTask);
-                                            if (The_Supplier == "Microsoft")
-                                            {
-                                                sqlConnection1 = new SqlConnection(@con1);
-                                                sqlConnection1.Open();
-                                                SqlCommand command2 = new SqlCommand("BACKUP DATABASE[" + Name_SYBD + "] TO  DISK = N'" + Way + "\\" + Name_SYBD + ".bak" + "' WITH NOFORMAT, INIT, NAME = N'" + Name_SYBD + "-Полная База данных Резервное копирование', SKIP, NOREWIND, NOUNLOAD, STATS = 10", sqlConnection1);
-                                                command2.CommandTimeout = 10000;
-                                                command2.ExecuteNonQuery();
-                                                sqlConnection1.Close();
-                                                CreatecompressSYBD(Adres_Server, Way, Name_SYBD, id1, MustBeEx);
-                                            }
-                                            if (The_Supplier == "PostgreSQL")
-                                            {
-                                                NpgsqlConnection conn = new NpgsqlConnection(con1);
-                                                conn.Open();
-                                                NpgsqlCommand npgsqlCommand1 = new NpgsqlCommand("show data_directory", conn);
-                                                string path = (string)npgsqlCommand1.ExecuteScalar();
-                                                path = path.Remove(path.Length - 4, 4) + "backups";
-                                                NpgsqlCommand npgsqlCommand = new NpgsqlCommand("select * from public.xp_pg_dump(@dbName, @backupName)", conn);
-                                                npgsqlCommand.CommandTimeout = 86400;
-                                                npgsqlCommand.Parameters.AddWithValue("@dbName", Name_SYBD);
-                                                npgsqlCommand.Parameters.AddWithValue("@backupName", path + "/" + Name_SYBD + ".bak");
-                                                npgsqlCommand.ExecuteNonQuery();
-                                                conn.Close();
-                                                CreatecompressSYBDPostg(Adres_Server, path, Name_SYBD, id1, MustBeEx);
-
-                                            }
-
-                                            if (Convert.ToBoolean(dataSet.Tables["Task"].Rows[i][13]) && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][12]).Date == DateTime.Now.Date)
-                                            {
-                                                int id2 = (int)dataSet.Tables["Task"].Rows[i]["Id"];
-                                                string sql1 = "DELETE FROM [SYBD] " + "WHERE IdSYBD = @IdSYBD";
-                                                SqlCommand command3 = new SqlCommand(sql1, sqlConnection);
-                                                command3.Parameters.AddWithValue("@IdSYBD", id2);
-                                                command3.ExecuteNonQuery();
-                                                dataSet.Tables["Task"].Rows[i].Delete();
-                                                sqlDataAdapter.Update(dataSet, "Task");
-
-                                            }
-                                        }
-
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "ежедневная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "еженедельная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
-                                            if (m == DateTime.Now.DayOfWeek)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-                                        }
+                                        FolderRegularJob(id1, i);
                                     }
                                 }
                             }
@@ -909,88 +536,7 @@ namespace ClientFileStorage
                                     }
                                     if (!AOneTimeJob)
                                     {
-                                        if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Hour == Time.Hour && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Minute == Time.Minute)
-                                        {
-                                            string MustBeEx = dataSet.Tables["Task"].Rows[i][17].ToString();
-                                            con1 = ConSYBD(Integrated_Security, Adres_Server, Instance_Server, Name_SYBD, Login_SYBD, Password_SYBD, Time, Port_Server);
-                                            dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddMinutes(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][9]) * 60);
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                            string[] stringTask = new string[19];
-                                            for (int j = 0; j < 19; j++)
-                                            {
-                                                stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                            }
-                                            WriteTaskToServer1(stringTask);
-                                            if (The_Supplier == "Microsoft")
-                                            {
-                                                sqlConnection1 = new SqlConnection(@con1);
-                                                sqlConnection1.Open();
-                                                SqlCommand command2 = new SqlCommand("BACKUP DATABASE[" + Name_SYBD + "] TO  DISK = N'" + Way + "\\" + Name_SYBD + ".bak" + "' WITH NOFORMAT, INIT, NAME = N'" + Name_SYBD + "-Полная База данных Резервное копирование', SKIP, NOREWIND, NOUNLOAD, STATS = 10", sqlConnection1);
-                                                command2.CommandTimeout = 10000;
-                                                command2.ExecuteNonQuery();
-                                                sqlConnection1.Close();
-                                                CreatecompressSYBD(Adres_Server, Way, Name_SYBD, id1, MustBeEx);
-                                            }
-                                            if (The_Supplier == "PostgreSQL")
-                                            {
-                                                NpgsqlConnection conn = new NpgsqlConnection(con1);
-                                                conn.Open();
-                                                NpgsqlCommand npgsqlCommand1 = new NpgsqlCommand("show data_directory", conn);
-                                                string path = (string)npgsqlCommand1.ExecuteScalar();
-                                                path = path.Remove(path.Length - 4, 4) + "backups";
-                                                NpgsqlCommand npgsqlCommand = new NpgsqlCommand("select * from public.xp_pg_dump(@dbName, @backupName)", conn);
-                                                npgsqlCommand.CommandTimeout = 86400;
-                                                npgsqlCommand.Parameters.AddWithValue("@dbName", Name_SYBD);
-                                                npgsqlCommand.Parameters.AddWithValue("@backupName", path + "/" + Name_SYBD + ".bak");
-                                                npgsqlCommand.ExecuteNonQuery();
-                                                conn.Close();
-                                                CreatecompressSYBDPostg(Adres_Server, path, Name_SYBD, id1, MustBeEx);
-
-                                            }
-
-                                            if (Convert.ToBoolean(dataSet.Tables["Task"].Rows[i][13]) && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][12]).Date == DateTime.Now.Date)
-                                            {
-                                                int id2 = (int)dataSet.Tables["Task"].Rows[i]["Id"];
-                                                string sql1 = "DELETE FROM [SYBD] " + "WHERE IdSYBD = @IdSYBD";
-                                                SqlCommand command3 = new SqlCommand(sql1, sqlConnection);
-                                                command3.Parameters.AddWithValue("@IdSYBD", id2);
-                                                command3.ExecuteNonQuery();
-                                                dataSet.Tables["Task"].Rows[i].Delete();
-                                                sqlDataAdapter.Update(dataSet, "Task");
-
-                                            }
-                                        }
-
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "ежедневная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "еженедельная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
-                                            if (m == DateTime.Now.DayOfWeek)
-                                            {
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string s1 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][10]).TimeOfDay.ToString();
-                                                s1 = s1.Remove(s1.Length - 3, 3);
-                                                string s2 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddDays(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][5]) / 24 / 60).ToString("dd.MM.yyyy HH:mm:ff");
-                                                string s3 = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).TimeOfDay.ToString();
-                                                s3 = s3.Remove(s3.Length - 3, 3);
-                                                s2 = s2.Replace(s3, s1);
-                                                dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = s2;
-                                                sqlDataAdapter.Update(dataSet, "Task");
-                                                string[] stringTask = new string[19];
-                                                for (int j = 0; j < 19; j++)
-                                                {
-                                                    stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                                }
-                                                WriteTaskToServer1(stringTask);
-                                            }
-                                        }
+                                        FolderRegularJob(id1, i);
                                     }
                                 }
                             }
@@ -1005,74 +551,7 @@ namespace ClientFileStorage
                                     }
                                     if (!AOneTimeJob)
                                     {
-                                        if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Hour == Time.Hour && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Minute == Time.Minute)
-                                        {
-                                            string MustBeEx = dataSet.Tables["Task"].Rows[i][17].ToString();
-                                            con1 = ConSYBD(Integrated_Security, Adres_Server, Instance_Server, Name_SYBD, Login_SYBD, Password_SYBD, Time, Port_Server);
-                                            dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddMinutes(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][9]) * 60);
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                            string[] stringTask = new string[19];
-                                            for (int j = 0; j < 19; j++)
-                                            {
-                                                stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                            }
-                                            WriteTaskToServer1(stringTask);
-                                            if (The_Supplier == "Microsoft")
-                                            {
-                                                sqlConnection1 = new SqlConnection(@con1);
-                                                sqlConnection1.Open();
-                                                SqlCommand command2 = new SqlCommand("BACKUP DATABASE[" + Name_SYBD + "] TO  DISK = N'" + Way + "\\" + Name_SYBD + ".bak" + "' WITH NOFORMAT, INIT, NAME = N'" + Name_SYBD + "-Полная База данных Резервное копирование', SKIP, NOREWIND, NOUNLOAD, STATS = 10", sqlConnection1);
-                                                command2.CommandTimeout = 10000;
-                                                command2.ExecuteNonQuery();
-                                                sqlConnection1.Close();
-                                                CreatecompressSYBD(Adres_Server, Way, Name_SYBD, id1, MustBeEx);
-                                            }
-                                            if (The_Supplier == "PostgreSQL")
-                                            {
-                                                NpgsqlConnection conn = new NpgsqlConnection(con1);
-                                                conn.Open();
-                                                NpgsqlCommand npgsqlCommand1 = new NpgsqlCommand("show data_directory", conn);
-                                                string path = (string)npgsqlCommand1.ExecuteScalar();
-                                                path = path.Remove(path.Length - 4, 4) + "backups";
-                                                NpgsqlCommand npgsqlCommand = new NpgsqlCommand("select * from public.xp_pg_dump(@dbName, @backupName)", conn);
-                                                npgsqlCommand.CommandTimeout = 86400;
-                                                npgsqlCommand.Parameters.AddWithValue("@dbName", Name_SYBD);
-                                                npgsqlCommand.Parameters.AddWithValue("@backupName", path + "/" + Name_SYBD + ".bak");
-                                                npgsqlCommand.ExecuteNonQuery();
-                                                conn.Close();
-                                                CreatecompressSYBDPostg(Adres_Server, path, Name_SYBD, id1, MustBeEx);
-
-                                            }
-
-                                            if (Convert.ToBoolean(dataSet.Tables["Task"].Rows[i][13]) && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][12]).Date == DateTime.Now.Date)
-                                            {
-                                                int id2 = (int)dataSet.Tables["Task"].Rows[i]["Id"];
-                                                string sql1 = "DELETE FROM [SYBD] " + "WHERE IdSYBD = @IdSYBD";
-                                                SqlCommand command3 = new SqlCommand(sql1, sqlConnection);
-                                                command3.Parameters.AddWithValue("@IdSYBD", id2);
-                                                command3.ExecuteNonQuery();
-                                                dataSet.Tables["Task"].Rows[i].Delete();
-                                                sqlDataAdapter.Update(dataSet, "Task");
-
-                                            }
-                                        }
-
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "ежедневная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "еженедельная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
-                                            if (m == DateTime.Now.DayOfWeek)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-                                        }
+                                        FolderRegularJob(id1, i);
                                     }
                                 }
                             }
@@ -1087,74 +566,7 @@ namespace ClientFileStorage
                                     }
                                     if (!AOneTimeJob)
                                     {
-                                        if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Hour == Time.Hour && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Minute == Time.Minute)
-                                        {
-                                            string MustBeEx = dataSet.Tables["Task"].Rows[i][17].ToString();
-                                            con1 = ConSYBD(Integrated_Security, Adres_Server, Instance_Server, Name_SYBD, Login_SYBD, Password_SYBD, Time, Port_Server);
-                                            dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddMinutes(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][9]) * 60);
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                            string[] stringTask = new string[19];
-                                            for (int j = 0; j < 19; j++)
-                                            {
-                                                stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                            }
-                                            WriteTaskToServer1(stringTask);
-                                            if (The_Supplier == "Microsoft")
-                                            {
-                                                sqlConnection1 = new SqlConnection(@con1);
-                                                sqlConnection1.Open();
-                                                SqlCommand command2 = new SqlCommand("BACKUP DATABASE[" + Name_SYBD + "] TO  DISK = N'" + Way + "\\" + Name_SYBD + ".bak" + "' WITH NOFORMAT, INIT, NAME = N'" + Name_SYBD + "-Полная База данных Резервное копирование', SKIP, NOREWIND, NOUNLOAD, STATS = 10", sqlConnection1);
-                                                command2.CommandTimeout = 10000;
-                                                command2.ExecuteNonQuery();
-                                                sqlConnection1.Close();
-                                                CreatecompressSYBD(Adres_Server, Way, Name_SYBD, id1, MustBeEx);
-                                            }
-                                            if (The_Supplier == "PostgreSQL")
-                                            {
-                                                NpgsqlConnection conn = new NpgsqlConnection(con1);
-                                                conn.Open();
-                                                NpgsqlCommand npgsqlCommand1 = new NpgsqlCommand("show data_directory", conn);
-                                                string path = (string)npgsqlCommand1.ExecuteScalar();
-                                                path = path.Remove(path.Length - 4, 4) + "backups";
-                                                NpgsqlCommand npgsqlCommand = new NpgsqlCommand("select * from public.xp_pg_dump(@dbName, @backupName)", conn);
-                                                npgsqlCommand.CommandTimeout = 86400;
-                                                npgsqlCommand.Parameters.AddWithValue("@dbName", Name_SYBD);
-                                                npgsqlCommand.Parameters.AddWithValue("@backupName", path + "/" + Name_SYBD + ".bak");
-                                                npgsqlCommand.ExecuteNonQuery();
-                                                conn.Close();
-                                                CreatecompressSYBDPostg(Adres_Server, path, Name_SYBD, id1, MustBeEx);
-
-                                            }
-
-                                            if (Convert.ToBoolean(dataSet.Tables["Task"].Rows[i][13]) && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][12]).Date == DateTime.Now.Date)
-                                            {
-                                                int id2 = (int)dataSet.Tables["Task"].Rows[i]["Id"];
-                                                string sql1 = "DELETE FROM [SYBD] " + "WHERE IdSYBD = @IdSYBD";
-                                                SqlCommand command3 = new SqlCommand(sql1, sqlConnection);
-                                                command3.Parameters.AddWithValue("@IdSYBD", id2);
-                                                command3.ExecuteNonQuery();
-                                                dataSet.Tables["Task"].Rows[i].Delete();
-                                                sqlDataAdapter.Update(dataSet, "Task");
-
-                                            }
-                                        }
-
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "ежедневная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "еженедельная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
-                                            if (m == DateTime.Now.DayOfWeek)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-                                        }
+                                        FolderRegularJob(id1, i);
                                     }
                                 }
                             }
@@ -1169,74 +581,7 @@ namespace ClientFileStorage
                                     }
                                     if (!AOneTimeJob)
                                     {
-                                        if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Hour == Time.Hour && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Minute == Time.Minute)
-                                        {
-                                            string MustBeEx = dataSet.Tables["Task"].Rows[i][17].ToString();
-                                            con1 = ConSYBD(Integrated_Security, Adres_Server, Instance_Server, Name_SYBD, Login_SYBD, Password_SYBD, Time, Port_Server);
-                                            dataSet.Tables["Task"].Rows[i]["MustBeExecuted"] = Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).AddMinutes(Convert.ToInt32(dataSet.Tables["Task"].Rows[i][9]) * 60);
-                                            sqlDataAdapter.Update(dataSet, "Task");
-                                            string[] stringTask = new string[19];
-                                            for (int j = 0; j < 19; j++)
-                                            {
-                                                stringTask[j] = dataSet.Tables["Task"].Rows[i][j].ToString();
-                                            }
-                                            WriteTaskToServer1(stringTask);
-                                            if (The_Supplier == "Microsoft")
-                                            {
-                                                sqlConnection1 = new SqlConnection(@con1);
-                                                sqlConnection1.Open();
-                                                SqlCommand command2 = new SqlCommand("BACKUP DATABASE[" + Name_SYBD + "] TO  DISK = N'" + Way + "\\" + Name_SYBD + ".bak" + "' WITH NOFORMAT, INIT, NAME = N'" + Name_SYBD + "-Полная База данных Резервное копирование', SKIP, NOREWIND, NOUNLOAD, STATS = 10", sqlConnection1);
-                                                command2.CommandTimeout = 10000;
-                                                command2.ExecuteNonQuery();
-                                                sqlConnection1.Close();
-                                                CreatecompressSYBD(Adres_Server, Way, Name_SYBD, id1, MustBeEx);
-                                            }
-                                            if (The_Supplier == "PostgreSQL")
-                                            {
-                                                NpgsqlConnection conn = new NpgsqlConnection(con1);
-                                                conn.Open();
-                                                NpgsqlCommand npgsqlCommand1 = new NpgsqlCommand("show data_directory", conn);
-                                                string path = (string)npgsqlCommand1.ExecuteScalar();
-                                                path = path.Remove(path.Length - 4, 4) + "backups";
-                                                NpgsqlCommand npgsqlCommand = new NpgsqlCommand("select * from public.xp_pg_dump(@dbName, @backupName)", conn);
-                                                npgsqlCommand.CommandTimeout = 86400;
-                                                npgsqlCommand.Parameters.AddWithValue("@dbName", Name_SYBD);
-                                                npgsqlCommand.Parameters.AddWithValue("@backupName", path + "/" + Name_SYBD + ".bak");
-                                                npgsqlCommand.ExecuteNonQuery();
-                                                conn.Close();
-                                                CreatecompressSYBDPostg(Adres_Server, path, Name_SYBD, id1, MustBeEx);
-
-                                            }
-
-                                            if (Convert.ToBoolean(dataSet.Tables["Task"].Rows[i][13]) && Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][12]).Date == DateTime.Now.Date)
-                                            {
-                                                int id2 = (int)dataSet.Tables["Task"].Rows[i]["Id"];
-                                                string sql1 = "DELETE FROM [SYBD] " + "WHERE IdSYBD = @IdSYBD";
-                                                SqlCommand command3 = new SqlCommand(sql1, sqlConnection);
-                                                command3.Parameters.AddWithValue("@IdSYBD", id2);
-                                                command3.ExecuteNonQuery();
-                                                dataSet.Tables["Task"].Rows[i].Delete();
-                                                sqlDataAdapter.Update(dataSet, "Task");
-
-                                            }
-                                        }
-
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "ежедневная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            if (Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][17]).Date == Time.Date)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-
-                                        }
-                                        if (Convert.ToString(dataSet.Tables["Task"].Rows[i][4]) == "еженедельная" && Time.TimeOfDay >= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).TimeOfDay && Time.TimeOfDay <= Convert.ToDateTime(dataSet.Tables["Task"].Rows[i][11]).AddMinutes(1).TimeOfDay)
-                                        {
-                                            var m = EndDay(Convert.ToString(dataSet.Tables["Task"].Rows[i][6]));
-                                            if (m == DateTime.Now.DayOfWeek)
-                                            {
-                                                TemplateMethod(i);
-                                            }
-                                        }
+                                        FolderRegularJob(id1, i);
                                     }
                                 }
                             }
