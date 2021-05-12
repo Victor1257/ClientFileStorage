@@ -698,6 +698,7 @@ namespace ClientFileStorage
                 conn.Open();
                 NpgsqlCommand command2 = new NpgsqlCommand("SELECT datname FROM pg_database", conn);
                 NpgsqlDataReader reader = command2.ExecuteReader();
+
                 bool temp = false;
                 while (reader.Read())
                 {
@@ -725,6 +726,21 @@ namespace ClientFileStorage
             if (comboBox2.SelectedItem.ToString() == "Microsoft")
             {
                 groupBox13.Enabled = true;
+            }
+        }
+
+        private void comboBox8_TextChanged(object sender, EventArgs e)
+        {
+            comboBox8.Items.Clear();
+            comboBox8.Focus();
+            comboBox8.SelectionStart = comboBox8.Text.Length;
+            for (int i = 0; i < dblist.Count; i++)
+            {
+                string tempstring = dblist.ElementAt(i).ToString();
+                if (tempstring.Contains(comboBox8.Text))
+                {
+                    comboBox8.Items.Add(tempstring);
+                }
             }
         }
     }
