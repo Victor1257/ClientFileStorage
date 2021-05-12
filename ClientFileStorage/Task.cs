@@ -58,14 +58,11 @@ namespace ClientFileStorage
             }
             else
             {
-                //  sqlConnection = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=" + Path.GetFullPath("Database1.mdf") + ";Integrated Security=False");
-
-              //  sqlConnection = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\meschaninov\Desktop\3\ClientFileStorage\Database1.mdf;Integrated Security=True");
-                sqlConnection = new SqlConnection(@"Data Source = (LocalDB)\MSSQLLocalDB; AttachDbFilename =" + System.IO.Path.GetDirectoryName(Path.GetDirectoryName(Application.StartupPath)) + "\\Database1.mdf; Integrated Security = True");
-
-               // sqlConnection = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\Users\meschaninov\Desktop\3\ClientFileStorage\Database1.mdf;Integrated Security=True");
                 //sqlConnection = new SqlConnection(@"Data Source = (LocalDB)\MSSQLLocalDB; AttachDbFilename =" + System.IO.Path.GetDirectoryName(Path.GetDirectoryName(Application.StartupPath)) + "\\Database1.mdf; Integrated Security = True");
-
+                
+                SQLClass sqlClass = new SQLClass();
+                sqlConnection = new SqlConnection(sqlClass.sqlConnectionString);
+                
                 await sqlConnection.OpenAsync();
             }
 

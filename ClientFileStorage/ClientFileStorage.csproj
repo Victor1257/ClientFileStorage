@@ -90,6 +90,7 @@
       <DependentUpon>FileStorage.cs</DependentUpon>
     </Compile>
     <Compile Include="MakeTasks.cs" />
+    <Compile Include="SQLClass.cs" />
     <Compile Include="Task.cs">
       <SubType>Form</SubType>
     </Compile>
